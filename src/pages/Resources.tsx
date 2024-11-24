@@ -10,9 +10,9 @@ export function Resources() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold gradient-text mb-2">Resources</h1>
+          <h1 className="text-4xl font-bold gradient-text mb-2">Microservices</h1>
           <p className="text-lg text-muted-foreground">
-            Manage your Kubernetes resources
+            Manage your Prime EDM Microservices resources
           </p>
         </div>
         <CreateResource />
