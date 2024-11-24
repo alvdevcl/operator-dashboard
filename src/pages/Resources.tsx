@@ -12,7 +12,7 @@ export function Resources() {
         <div>
           <h1 className="text-4xl font-bold gradient-text mb-2">Microservices</h1>
           <p className="text-lg text-muted-foreground">
-            Manage your Prime EDM Microservices resources
+            Manage your Prime EDM Microservices
           </p>
         </div>
         <CreateResource />
