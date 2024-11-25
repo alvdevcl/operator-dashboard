@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, X, AlertCircle, FileCode, FormInput, Import } from 'lucide-react';
+import { Plus, X, AlertCircle, FileCode, FormInput, Import, Save, Copy } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { YamlEditor } from './YamlEditor';
 import { useResourceStore } from '../store/resources';
@@ -7,7 +7,6 @@ import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
 
-// Import templates from the catalog
 const catalogTemplates = [
   {
     id: 'auth-service',
@@ -54,43 +53,6 @@ spec:
     pathType: "Prefix"
     annotations:
       kubernetes.io/ingress.class: nginx`
-  },
-  {
-    id: 'ops-board',
-    name: 'Operations Board UI',
-    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
-kind: OpsBoard
-metadata:
-  name: ops-board
-  namespace: microservice-operator
-spec:
-  replicas: 2
-  image: ac-m2repo-prod.asset-control.com:5443/ops-board:1.0.0
-  service:
-    type: ClusterIP
-    port: 80
-    targetPort: 8080
-  ingress:
-    enabled: true
-    host: "ops.alveotech.com"
-    path: "/"
-    pathType: "Prefix"`
-  },
-  {
-    id: 'data-view-admin',
-    name: 'Data View Admin UI',
-    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
-kind: DataViewAdmin
-metadata:
-  name: data-view-admin
-  namespace: microservice-operator
-spec:
-  replicas: 1
-  image: ac-m2repo-prod.asset-control.com:5443/data-view-admin:1.0.0
-  service:
-    type: ClusterIP
-    port: 80
-    targetPort: 8080`
   }
 ];
 
@@ -140,7 +102,9 @@ export function CreateResource() {
   const [isYamlMode, setIsYamlMode] = React.useState(false);
   const [yamlContent, setYamlContent] = React.useState(defaultYaml);
   const [error, setError] = React.useState<string | null>(null);
-  
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
   const { register, handleSubmit, watch, reset, setValue } = useForm<ResourceForm>({
     defaultValues: {
       namespace: 'microservice-operator',
@@ -160,20 +124,6 @@ export function CreateResource() {
   });
 
   const watchIngressEnabled = watch('ingress.enabled');
-
-  React.useEffect(() => {
-    const savedTemplate = localStorage.getItem('selectedTemplate');
-    if (savedTemplate) {
-      try {
-        setYamlContent(savedTemplate);
-        setIsYamlMode(true);
-        setIsOpen(true);
-        localStorage.removeItem('selectedTemplate');
-      } catch (error) {
-        console.error('Failed to load template:', error);
-      }
-    }
-  }, []);
 
   const handleTemplateSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const templateId = event.target.value;
@@ -203,6 +153,7 @@ export function CreateResource() {
         }
       } catch (error) {
         console.error('Failed to parse template:', error);
+        setError('Failed to parse template configuration');
       }
     }
   };
@@ -243,13 +194,16 @@ export function CreateResource() {
         }
       };
 
+      setIsSaving(true);
       addResource(resource);
       await queryClient.invalidateQueries({ queryKey: ['resources'] });
       setIsOpen(false);
       reset();
       setError(null);
+      setIsSaving(false);
     } catch (error) {
       setError('Failed to create resource. Please check your input.');
+      setIsSaving(false);
     }
   };
 
@@ -257,7 +211,6 @@ export function CreateResource() {
     try {
       const resource = yaml.load(yamlContent) as any;
       
-      // Ensure required fields
       if (!resource.metadata.uid) {
         resource.metadata.uid = uuidv4();
       }
@@ -272,19 +225,21 @@ export function CreateResource() {
         };
       }
 
+      setIsSaving(true);
       addResource(resource);
       await queryClient.invalidateQueries({ queryKey: ['resources'] });
       setIsOpen(false);
       setYamlContent(defaultYaml);
       setError(null);
+      setIsSaving(false);
     } catch (error) {
       setError('Invalid YAML format. Please check your configuration.');
+      setIsSaving(false);
     }
   };
 
   const toggleMode = () => {
     if (!isYamlMode) {
-      // Convert form data to YAML
       const formData = watch();
       const resource = {
         apiVersion: 'microservice.alveotech.com/v1alpha1',
@@ -310,6 +265,11 @@ export function CreateResource() {
     setIsYamlMode(!isYamlMode);
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(yamlContent);
+    setCopied(true);
+  };
+
   return (
     <>
       <button
@@ -323,7 +283,7 @@ export function CreateResource() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
-          <div className="relative bg-background rounded-lg shadow-lg w-full max-w-3xl">
+          <div className="relative bg-background rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <h2 className="text-lg font-semibold">Create Resource</h2>
@@ -366,7 +326,7 @@ export function CreateResource() {
               </div>
             )}
 
-            <div className="p-4">
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
               {/* Template Selection */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-2">
@@ -387,11 +347,20 @@ export function CreateResource() {
               </div>
 
               {isYamlMode ? (
-                <div className="h-[60vh]">
+                <div className="relative h-[500px]">
+                  <div className="absolute top-2 right-2 z-10">
+                    <button
+                      onClick={handleCopy}
+                      className="inline-flex items-center px-3 py-1.5 rounded-md bg-background border hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
                   <YamlEditor value={yamlContent} onChange={setYamlContent} />
                 </div>
               ) : (
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+                <form id="resourceForm" onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Name</label>
@@ -532,10 +501,21 @@ export function CreateResource() {
                 Cancel
               </button>
               <button
-                onClick={isYamlMode ? handleYamlSubmit : handleSubmit(handleFormSubmit)}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+                onClick={isYamlMode ? handleYamlSubmit : () => document.getElementById('resourceForm')?.requestSubmit()}
+                disabled={isSaving}
+                className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
               >
-                Create
+                {isSaving ? (
+                  <>
+                    <span className="animate-spin mr-2">⋯</span>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Create Resource
+                  </>
+                )}
               </button>
             </div>
           </div>
