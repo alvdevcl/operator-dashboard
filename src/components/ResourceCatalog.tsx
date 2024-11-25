@@ -1,8 +1,10 @@
 import React from 'react';
 import { Search, Box, Shield, Database, Layout, ArrowRight, Plus } from 'lucide-react';
-import { YamlEditor } from './YamlEditor';
-import { useNavigate } from 'react-router-dom';
+import { YamlTemplateModal } from './YamlTemplateModal';
+import { useResourceStore } from '../store/resources';
 import yaml from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Template {
   id: string;
@@ -231,11 +233,12 @@ spec:
 ];
 
 export function ResourceCatalog() {
-  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
-  const [isYamlVisible, setIsYamlVisible] = React.useState(false);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const { addResource } = useResourceStore();
+  const queryClient = useQueryClient();
 
   const filteredTemplates = React.useMemo(() => {
     return templates.filter(template => {
@@ -256,24 +259,43 @@ export function ResourceCatalog() {
 
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
-    setIsYamlVisible(true);
+    setIsModalOpen(true);
   };
 
-  const handleCreateResource = () => {
-    if (selectedTemplate) {
-      try {
-        const parsedYaml = yaml.load(selectedTemplate.yaml);
-        localStorage.setItem('selectedTemplate', JSON.stringify(parsedYaml));
-        navigate('/resources');
-      } catch (error) {
-        console.error('Failed to parse YAML:', error);
+  const handleYamlSubmit = async (yamlContent: string) => {
+    try {
+      const parsed = yaml.load(yamlContent) as any;
+      
+      // Ensure the resource has a unique ID
+      if (!parsed.metadata.uid) {
+        parsed.metadata.uid = uuidv4();
       }
+
+      // Add the resource to the store
+      addResource(parsed);
+
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({ queryKey: ['resources'] });
+
+      setIsModalOpen(false);
+      
+      // Show success message
+      const successMessage = document.createElement('div');
+      successMessage.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-slideDown';
+      successMessage.textContent = 'Template applied successfully!';
+      document.body.appendChild(successMessage);
+      
+      setTimeout(() => {
+        successMessage.remove();
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to parse YAML:', error);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Search and Filters - Full width on mobile, row on desktop */}
+    <div className="space-y-8">
+      {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -287,9 +309,9 @@ export function ResourceCatalog() {
         </div>
       </div>
 
-      {/* Main Content - Stack on mobile, side-by-side on desktop */}
+      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Categories - Horizontal scroll on mobile, vertical list on desktop */}
+        {/* Categories */}
         <div className="order-2 lg:order-1">
           <div className="lg:space-y-4">
             <h3 className="font-semibold text-lg mb-4">Categories</h3>
@@ -321,7 +343,7 @@ export function ResourceCatalog() {
           </div>
         </div>
 
-        {/* Templates Grid - Responsive grid with larger cards */}
+        {/* Templates Grid */}
         <div className="order-1 lg:order-2 lg:col-span-3">
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             {filteredTemplates.map((template) => (
@@ -362,39 +384,13 @@ export function ResourceCatalog() {
         </div>
       </div>
 
-      {/* YAML Preview - Full width, collapsible */}
-      {selectedTemplate && (
-        <div className="mt-8 bg-card rounded-lg border shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">YAML Template: {selectedTemplate.name}</h3>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setIsYamlVisible(!isYamlVisible)}
-                  className="text-sm text-primary hover:text-primary/90"
-                >
-                  {isYamlVisible ? 'Hide YAML' : 'Show YAML'}
-                </button>
-                <button
-                  onClick={handleCreateResource}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-white hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Resource
-                </button>
-              </div>
-            </div>
-            {isYamlVisible && (
-              <div className="mt-4">
-                <YamlEditor
-                  value={selectedTemplate.yaml}
-                  onChange={() => {}} // Read-only for templates
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* YAML Template Modal */}
+      <YamlTemplateModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        template={selectedTemplate}
+        onSubmit={handleYamlSubmit}
+      />
     </div>
   );
 }

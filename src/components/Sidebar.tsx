@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     href: '/',
   },
   {
-    label: 'Catalogs',
+    label: 'Software Catalogs',
     icon: <Library className="h-5 w-5" />,
     href: '/catalogs',
   },
@@ -84,7 +84,7 @@ export function Sidebar() {
           {/* Header */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
             {!collapsed && (
-              <span className="font-bold text-xl gradient-text">Prime EDM Cloud K8s Manager</span>
+              <span className="font-bold text-xl gradient-text">Prime EDM Cloud Resources Manager</span>
             )}
             <button
               onClick={() => setCollapsed(!collapsed)}

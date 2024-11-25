@@ -15,7 +15,15 @@ import { Environments } from './pages/Environments';
 import { Settings } from './pages/Settings';
 import { Documentation } from './pages/Documentation';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      retry: 1
+    },
+  },
+});
 
 export default function App() {
   const { theme } = useThemeStore();

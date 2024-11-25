@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Shield, Box, Users, Clock } from 'lucide-react';
+import { Search, Box, Shield, Database, Layout, Users, Clock } from 'lucide-react';
 
 interface Namespace {
   name: string;
@@ -133,17 +133,11 @@ export function Environments() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold gradient-text mb-2">Environments</h1>
-          <p className="text-lg text-muted-foreground">
-            Manage your Kubernetes namespaces
-          </p>
-        </div>
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-white hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Namespace
-        </button>
+      <div>
+        <h1 className="text-4xl font-bold gradient-text mb-2">Environments</h1>
+        <p className="text-lg text-muted-foreground">
+          Manage your Kubernetes namespaces
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
