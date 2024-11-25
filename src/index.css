@@ -82,6 +82,39 @@
   animation: slideDown 0.2s ease-out;
 }
 
+.animate-in {
+  animation-duration: 150ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fade-in 150ms ease-out forwards;
+}
+
+.slide-in-from-bottom-2 {
+  transform: translateY(0.5rem);
+  animation: slide-in-from-bottom 150ms ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(0.5rem);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 /* Custom scrollbar styles */
 .monaco-editor ::-webkit-scrollbar {
   width: 8px;

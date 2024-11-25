@@ -7,6 +7,7 @@ import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
 
+// Import templates from the catalog
 const catalogTemplates = [
   {
     id: 'auth-service',
@@ -49,6 +50,121 @@ spec:
   ingress:
     enabled: true
     host: "auth-ui.alveotech.com"
+    path: "/"
+    pathType: "Prefix"
+    annotations:
+      kubernetes.io/ingress.class: nginx`
+  },
+  {
+    id: 'ops-board',
+    name: 'Operations Board UI',
+    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
+kind: OpsBoard
+metadata:
+  name: ops-board
+  namespace: microservice-operator
+spec:
+  replicas: 2
+  image: ac-m2repo-prod.asset-control.com:5443/ops-board:1.0.0
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  ingress:
+    enabled: true
+    host: "ops.alveotech.com"
+    path: "/"
+    pathType: "Prefix"
+    annotations:
+      kubernetes.io/ingress.class: nginx`
+  },
+  {
+    id: 'data-view-admin',
+    name: 'Data View Admin UI',
+    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
+kind: DataViewAdmin
+metadata:
+  name: data-view-admin
+  namespace: microservice-operator
+spec:
+  replicas: 1
+  image: ac-m2repo-prod.asset-control.com:5443/data-view-admin:1.0.0
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  ingress:
+    enabled: true
+    host: "data-view.alveotech.com"
+    path: "/"
+    pathType: "Prefix"
+    annotations:
+      kubernetes.io/ingress.class: nginx`
+  },
+  {
+    id: 'data-model-admin',
+    name: 'Data Model Admin UI',
+    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
+kind: DataModelAdmin
+metadata:
+  name: data-model-admin
+  namespace: microservice-operator
+spec:
+  replicas: 1
+  image: ac-m2repo-prod.asset-control.com:5443/data-model-admin:1.0.0
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  ingress:
+    enabled: true
+    host: "data-model.alveotech.com"
+    path: "/"
+    pathType: "Prefix"
+    annotations:
+      kubernetes.io/ingress.class: nginx`
+  },
+  {
+    id: 'frontend-service',
+    name: 'Frontend Service',
+    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
+kind: FrontendService
+metadata:
+  name: frontend-service
+  namespace: microservice-operator
+spec:
+  replicas: 3
+  image: ac-m2repo-prod.asset-control.com:5443/frontend-service:1.0.0
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  ingress:
+    enabled: true
+    host: "frontend.alveotech.com"
+    path: "/"
+    pathType: "Prefix"
+    annotations:
+      kubernetes.io/ingress.class: nginx`
+  },
+  {
+    id: 'bdms',
+    name: 'BDMS',
+    yaml: `apiVersion: microservice.alveotech.com/v1alpha1
+kind: BDMS
+metadata:
+  name: bdms
+  namespace: microservice-operator
+spec:
+  replicas: 2
+  image: ac-m2repo-prod.asset-control.com:5443/bdms:1.0.0
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  ingress:
+    enabled: true
+    host: "bdms.alveotech.com"
     path: "/"
     pathType: "Prefix"
     annotations:
@@ -104,7 +220,7 @@ export function CreateResource() {
   const [error, setError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
-
+  
   const { register, handleSubmit, watch, reset, setValue } = useForm<ResourceForm>({
     defaultValues: {
       namespace: 'microservice-operator',
@@ -125,6 +241,13 @@ export function CreateResource() {
 
   const watchIngressEnabled = watch('ingress.enabled');
 
+  React.useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
   const handleTemplateSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const templateId = event.target.value;
     if (!templateId) return;
@@ -132,10 +255,10 @@ export function CreateResource() {
     const template = catalogTemplates.find(t => t.id === templateId);
     if (!template) return;
 
-    if (isYamlMode) {
-      setYamlContent(template.yaml);
-    } else {
-      try {
+    try {
+      if (isYamlMode) {
+        setYamlContent(template.yaml);
+      } else {
         const parsed = yaml.load(template.yaml) as any;
         setValue('name', parsed.metadata.name);
         setValue('namespace', parsed.metadata.namespace);
@@ -151,10 +274,11 @@ export function CreateResource() {
           setValue('ingress.path', parsed.spec.ingress.path);
           setValue('ingress.pathType', parsed.spec.ingress.pathType);
         }
-      } catch (error) {
-        console.error('Failed to parse template:', error);
-        setError('Failed to parse template configuration');
       }
+      setError(null);
+    } catch (error) {
+      console.error('Failed to parse template:', error);
+      setError('Failed to parse template configuration');
     }
   };
 
@@ -495,32 +619,4 @@ export function CreateResource() {
 
             <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 dark:bg-gray-800">
               <button
-                onClick={() => setIsOpen(false)}
-                className="px-4 py-2 border rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={isYamlMode ? handleYamlSubmit : () => document.getElementById('resourceForm')?.requestSubmit()}
-                disabled={isSaving}
-                className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin mr-2">⋯</span>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create Resource
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+                onClick

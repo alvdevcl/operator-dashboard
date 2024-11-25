@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Boxes,
@@ -8,8 +8,13 @@ import {
   ChevronLeft,
   Library,
   Layers,
-  BookOpen
+  BookOpen,
+  User,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { useAuthStore } from '../store/auth';
+import { useThemeStore } from '../store/theme';
 
 interface NavItem {
   label: string;
@@ -54,6 +59,19 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
+
+  // Close mobile menu when route changes
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    setMobileOpen(false); // Close mobile menu when navigating to profile
+  };
 
   return (
     <>
@@ -78,17 +96,17 @@ export function Sidebar() {
         className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${collapsed ? 'w-20' : 'w-64'}
-          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}
+          bg-background border-r`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="h-16 flex items-center justify-between px-4 border-b">
             {!collapsed && (
-              <span className="font-bold text-xl gradient-text">Prime EDM Cloud Resources Manager</span>
+              <span className="font-bold text-xl gradient-text">Prime EDM</span>
             )}
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 lg:block hidden"
+              className="p-2 rounded-md hover:bg-muted lg:block hidden"
             >
               <ChevronLeft className={`h-5 w-5 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`} />
             </button>
@@ -101,9 +119,8 @@ export function Sidebar() {
                 <li key={item.label}>
                   <Link
                     to={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 group transition-colors
-                      ${location.pathname === item.href ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+                    className={`flex items-center px-3 py-2 rounded-md text-foreground hover:bg-muted group transition-colors
+                      ${location.pathname === item.href ? 'bg-muted' : ''}`}
                   >
                     <span className="flex items-center justify-center">
                       {item.icon}
@@ -117,17 +134,43 @@ export function Sidebar() {
             </ul>
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#F15A5A] to-[#702459]" />
+          {/* Theme Toggle */}
+          <div className="px-3 py-2">
+            <button
+              onClick={toggleTheme}
+              className={`w-full flex items-center px-3 py-2 rounded-md hover:bg-muted transition-colors`}
+            >
+              {theme === 'light' ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
               {!collapsed && (
-                <div className="ml-3">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">admin@k8s.local</p>
+                <span className="ml-3 text-sm font-medium">
+                  {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t">
+            <button
+              onClick={handleProfileClick}
+              className="w-full flex items-center gap-3 hover:bg-muted p-2 rounded-md transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#F15A5A] to-[#702459] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-medium">
+                  {user?.name?.charAt(0) || 'A'}
+                </span>
+              </div>
+              {!collapsed && (
+                <div className="text-left overflow-hidden">
+                  <p className="text-sm font-medium truncate">{user?.name || 'Admin User'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@k8s.local'}</p>
                 </div>
               )}
-            </div>
+            </button>
           </div>
         </div>
       </aside>
