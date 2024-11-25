@@ -1,10 +1,11 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { EventLog } from './components/EventLog';
 import { useThemeStore } from './store/theme';
+import { ResourceDetails } from './pages/ResourceDetails';
+import { Profile } from './pages/Profile';
 
 // Pages
 import { Dashboard } from './pages/Dashboard';
@@ -21,8 +22,8 @@ const queryClient = new QueryClient({
       staleTime: 0,
       refetchOnWindowFocus: true,
       retry: 1
-    },
-  },
+    }
+  }
 });
 
 export default function App() {
@@ -35,16 +36,17 @@ export default function App() {
           <div className="min-h-screen bg-background">
             <Sidebar />
             <div className="lg:ml-64 min-h-screen">
-              <Header />
               <main className="container mx-auto px-4 py-8">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/catalogs" element={<Catalogs />} />
                   <Route path="/resources" element={<Resources />} />
+                  <Route path="/resources/:id" element={<ResourceDetails />} />
                   <Route path="/resources/list" element={<ResourceTypeList />} />
                   <Route path="/environments" element={<Environments />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/docs" element={<Documentation />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>

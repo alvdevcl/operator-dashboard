@@ -2,53 +2,53 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Server, Database, Lock, Cog, Layers } from 'lucide-react';
 
-const stats = [
-  { 
-    label: 'Total Nodes', 
-    value: '3', 
-    icon: Server, 
-    change: 'Healthy',
-    path: '/resources/list?kind=Node'
-  },
-  { 
-    label: 'Total Pods', 
-    value: '24', 
-    icon: Box, 
-    change: '22 Running',
-    path: '/resources/list?kind=Pod'
-  },
-  { 
-    label: 'Deployments', 
-    value: '8', 
-    icon: Layers, 
-    change: 'All Healthy',
-    path: '/resources/list?kind=Deployment'
-  },
-  { 
-    label: 'StatefulSets', 
-    value: '2', 
-    icon: Database, 
-    change: 'All Healthy',
-    path: '/resources/list?kind=StatefulSet'
-  },
-  { 
-    label: 'ConfigMaps', 
-    value: '12', 
-    icon: Cog, 
-    change: '3 Updated',
-    path: '/resources/list?kind=ConfigMap'
-  },
-  { 
-    label: 'Secrets', 
-    value: '15', 
-    icon: Lock, 
-    change: '2 Updated',
-    path: '/resources/list?kind=Secret'
-  },
-];
-
 export function Dashboard() {
   const navigate = useNavigate();
+
+  const stats = [
+    { 
+      label: 'Total Nodes', 
+      value: '3', 
+      icon: Server, 
+      change: 'Healthy',
+      path: '/resources/list?kind=Node'
+    },
+    { 
+      label: 'Total Pods', 
+      value: '24', 
+      icon: Box, 
+      change: '22 Running',
+      path: '/resources/list?kind=Pod'
+    },
+    { 
+      label: 'Deployments', 
+      value: '8', 
+      icon: Layers, 
+      change: 'All Healthy',
+      path: '/resources/list?kind=Deployment'
+    },
+    { 
+      label: 'StatefulSets', 
+      value: '2', 
+      icon: Database, 
+      change: 'All Healthy',
+      path: '/resources/list?kind=StatefulSet'
+    },
+    { 
+      label: 'ConfigMaps', 
+      value: '12', 
+      icon: Cog, 
+      change: '3 Updated',
+      path: '/resources/list?kind=ConfigMap'
+    },
+    { 
+      label: 'Secrets', 
+      value: '15', 
+      icon: Lock, 
+      change: '2 Updated',
+      path: '/resources/list?kind=Secret'
+    },
+  ];
 
   return (
     <div className="space-y-8">
