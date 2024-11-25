@@ -66,3 +66,37 @@
 .gradient-button {
   @apply bg-gradient-to-r from-[#F15A5A] to-[#702459] hover:from-[#F15A5A]/90 hover:to-[#702459]/90;
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Custom scrollbar styles */
+.monaco-editor ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.monaco-editor ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.monaco-editor ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.monaco-editor ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}

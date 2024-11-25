@@ -11,7 +11,7 @@ export function YamlEditor({ value, onChange }: YamlEditorProps) {
   const { theme } = useThemeStore();
 
   return (
-    <div className="h-[600px] border rounded-md overflow-hidden">
+    <div className="h-full w-full">
       <Editor
         height="100%"
         defaultLanguage="yaml"
@@ -25,6 +25,15 @@ export function YamlEditor({ value, onChange }: YamlEditorProps) {
           scrollBeyondLastLine: false,
           automaticLayout: true,
           tabSize: 2,
+          wordWrap: 'on',
+          wrappingStrategy: 'advanced',
+          scrollbar: {
+            vertical: 'visible',
+            horizontal: 'visible',
+            useShadows: false,
+            verticalScrollbarSize: 8,
+            horizontalScrollbarSize: 8
+          }
         }}
       />
     </div>
